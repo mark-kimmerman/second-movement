@@ -34,6 +34,7 @@
 #include "watch_common_display.h"
 #include "filesystem.h"
 #include "sunriset.h"
+#include "home_location.h"
 
 #if __EMSCRIPTEN__
 #include <emscripten.h>
@@ -54,6 +55,11 @@ static movement_location_t load_location_from_filesystem() {
     movement_location_t location = {0};
 
     filesystem_read_file("location.u32", (char *) &location.reg, sizeof(movement_location_t));
+
+    if (location.reg == 0) {
+        location.bit.latitude = MOVEMENT_DEFAULT_LATITUDE;
+        location.bit.longitude = MOVEMENT_DEFAULT_LONGITUDE;
+    }
 
     return location;
 }

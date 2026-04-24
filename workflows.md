@@ -3,6 +3,7 @@
 - [Manage Fork](#manage-fork)
 - [Build Firmware](#build-firmware)
 - [Manage Watch Faces](#manage-watch-faces)
+- [Compare with Upstream](#compare-with-upstream)
 
 ## Manage Fork
 
@@ -175,4 +176,69 @@ You still need to:
 3. Rebuild and flash: see [Build Firmware](#build-firmware).
 
 Full walkthrough and API reference: <https://www.sensorwatch.net/docs/movement/newface/>.
+
+## Compare with Upstream
+
+See what your `custom` branch has that `upstream/main` doesn't. Always fetch first so you're comparing against the latest:
+
+```bash
+git fetch upstream
+```
+
+### `..` vs `...` — the important distinction
+
+- `upstream/main..custom` (two dots) — commits reachable from `custom` but not `upstream/main`. Use with `git log`.
+- `upstream/main...custom` (three dots) — for `git diff`, this means "diff from the merge base to `custom`" → **only your changes**, even if upstream has moved on. Use with `git diff`.
+
+Using plain `..` with `git diff` mixes in upstream changes you haven't merged yet, which is almost never what you want.
+
+### List files you've changed
+
+```bash
+git diff --name-only upstream/main...custom
+```
+
+Add `--name-status` instead of `--name-only` to see `M`/`A`/`D` for modified/added/deleted.
+
+### Summary of changes
+
+```bash
+git diff --stat upstream/main...custom
+```
+
+One line per file with insert/delete counts.
+
+### Full diff
+
+```bash
+git diff upstream/main...custom
+```
+
+Pipe through a pager or into a file if it's large:
+
+```bash
+git diff upstream/main...custom > my-changes.diff
+```
+
+### Diff a single file or directory
+
+```bash
+git diff upstream/main...custom -- movement_config.h
+git diff upstream/main...custom -- watch-faces/
+```
+
+### List your commits (not in upstream)
+
+```bash
+git log upstream/main..custom --oneline
+```
+
+Drop `--oneline` for full commit messages. Add `--stat` to see files touched per commit.
+
+### Quick visual overview
+
+Open the GitHub compare view in a browser:
+
+<https://github.com/joeycastillo/second-movement/compare/main...mark-kimmerman:second-movement:custom>
+
 

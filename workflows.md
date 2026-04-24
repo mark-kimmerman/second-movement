@@ -2,6 +2,7 @@
 
 - [Manage Fork](#manage-fork)
 - [Build Firmware](#build-firmware)
+- [Manage Watch Faces](#manage-watch-faces)
 
 ## Manage Fork
 
@@ -118,4 +119,60 @@ make BOARD=sensorwatch_pro DISPLAY=custom TIMESET=minute NOSLEEP=1
 # Set time, then flash directly (double-tap reset first so WATCHBOOT is mounted)
 make BOARD=sensorwatch_pro DISPLAY=custom TIMESET=minute install
 ```
+
+## Manage Watch Faces
+
+Movement shows a list of "watch faces" — screens cycled with the MODE button. The roster is compile-time; edit it and rebuild to change the watch's behavior.
+
+Docs:
+
+- Movement overview: <https://www.sensorwatch.net/docs/movement/>
+- Designing a new watch face: <https://www.sensorwatch.net/docs/movement/newface/>
+
+### Change the set or order of faces
+
+Edit the `watch_faces[]` array in [`movement_config.h`](./movement_config.h) (around line 30). Order = cycle order when pressing MODE.
+
+```c
+const watch_face_t watch_faces[] = {
+    clock_face,                 // index 0 — the "home" face
+    world_clock_face,
+    sunrise_sunset_face,
+    // ... add, remove, or reorder entries here ...
+    settings_face,
+    set_time_face,
+};
+```
+
+Notes:
+
+- A face is only available if its header is `#include`d in [`movement_faces.h`](./movement_faces.h). All faces shipped with the repo are already included; the template script (below) keeps this up to date for new faces.
+- `MOVEMENT_SECONDARY_FACE_INDEX` in the same file splits the list into a primary group (short-press MODE cycles through it) and a secondary group (long-press MODE jumps there). Useful for pushing settings/utility faces behind a long-press.
+- Rebuild and flash after editing: see [Build Firmware](#build-firmware).
+
+### Create a new watch face
+
+Use the generator in [`template/`](./template/) — it stamps out the `.c`/`.h` boilerplate and wires the new face into `movement_faces.h` and `watch-faces.mk`.
+
+```bash
+cd template
+python3 watch_face.py <face_type> <face_name> --author-name "Your Name"
+```
+
+- `<face_type>` — one of `clock`, `complication`, `demo`, `sensor`, `settings`. Determines which subdirectory of `watch-faces/` the files land in.
+- `<face_name>` — lowercase, underscores between words (e.g. `pomodoro_timer`).
+
+The script:
+
+- creates `watch-faces/<face_type>/<face_name>_face.c` and `.h`
+- adds `#include "<face_name>_face.h"` to `movement_faces.h` (above the `// New includes go above this line.` marker)
+- adds the new `.c` path to `watch-faces.mk` (above the `# New watch faces go above this line.` marker)
+
+You still need to:
+
+1. Implement `setup` / `activate` / `loop` / `resign` in the generated `.c`. Start by reading [`watch-faces/clock/simple_clock_face.c`](./watch-faces/clock/simple_clock_face.c) for a minimal real example, and [`template/template.c`](./template/template.c) for the annotated boilerplate.
+2. Register the face in `watch_faces[]` in `movement_config.h` (see above).
+3. Rebuild and flash: see [Build Firmware](#build-firmware).
+
+Full walkthrough and API reference: <https://www.sensorwatch.net/docs/movement/newface/>.
 
